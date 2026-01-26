@@ -32,12 +32,8 @@ function Header() {
       </div>
 
       {/* Right: Button */}
-      <Link
-        to="/reserve"
-        className="px-6 py-2 text-white bg-pink-500 rounded-full hover:bg-pink-600 transition"
-      >
-        Réserver
-      </Link>
+      <button className="bg-pink-500 text-white px-4 py-2 rounded-full hover:bg-pink-600 transition duration-300">Réserver</button>
+
     </nav>
   );
 }

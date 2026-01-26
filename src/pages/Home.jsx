@@ -6,7 +6,7 @@ function Home() {
       className="relative flex items-center min-h-[85vh] bg-cover bg-center"
       style={{
         backgroundImage:
-  "linear-gradient(rgba(219,39,119,0.25), rgba(219,39,119,0.25)), url('https://images.unsplash.com/photo-1504151932400-72d4384f04b3')",
+  "linear-gradient(rgba(219,39,119,0.25), rgba(219,39,119,0.25)), url('https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=1800&q=80')",
 
       }}
     >

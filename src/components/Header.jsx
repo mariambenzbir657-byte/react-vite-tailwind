@@ -26,9 +26,6 @@ function Header() {
         <Link to="/Login" className="text-gray-600 hover:text-pink-500">
           Login
         </Link>
-        <Link to="/register" className="text-gray-600 hover:text-pink-500">
-          Register
-        </Link>
       </div>
 
       {/* Right: Button */}

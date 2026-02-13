@@ -1,64 +1,115 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { ArrowLeft, CheckCircle } from "lucide-react";
 
 const MesReservations = () => {
   const navigate = useNavigate();
-  const [reservations, setReservations] = useState([]);
-  const [loading, setLoading] = useState(true);
-
+  const location = useLocation();
   const [step, setStep] = useState(1);
+
+  // BabySitter sélectionnée et service et prix
+  const [selectedBabySitter, setSelectedBabySitter] = useState(null);
+  const [selectedServiceId, setSelectedServiceId] = useState(null);
+  const [prixParHeure, setPrixParHeure] = useState(0);
+
+
+  // Infos de réservation
   const [booking, setBooking] = useState({
     date: '',
     startTime: '',
     endTime: '',
     children: '',
-    specialNeeds: ''
+    specialNeeds: '',
   });
-  const [selectedBabySitter, setSelectedBabySitter] = useState(null);
-  const [selectedService, setSelectedService] = useState(null);
 
   const steps = [
     { id: 1, title: "Date & Heure" },
     { id: 2, title: "Détails" },
     { id: 3, title: "Confirmation" }
   ];
+
+  // 📌 Charger les données depuis la page Service si présentes
+  useEffect(() => {
+    if (location.state?.selectedBabySitter) setSelectedBabySitter(location.state.selectedBabySitter);
+    if (location.state?.serviceId) setSelectedServiceId(location.state.serviceId);
+    if (location.state?.prixParHeure) setPrixParHeure(location.state.prixParHeure);
+  }, [location.state]);
+
+  // 📌 Récupérer la réservation sauvegardée après login
+  useEffect(() => {
+    const pending = localStorage.getItem("pendingReservation");
+    if (pending) {
+      const data = JSON.parse(pending);
+      setSelectedBabySitter(data.selectedBabySitter);
+      setSelectedServiceId(data.selectedServiceId);
+      setBooking(data.booking);
+      localStorage.removeItem("pendingReservation");
+    }
+  }, []);
+
+  // Ajouter réservation
   const ajouterReservation = async () => {
+    const token = localStorage.getItem("token");
+    const user = JSON.parse(localStorage.getItem("user"));
+    const parentId = user?.id || user?._id;
+  
+    console.log("parentId 👉", parentId);
+  
+    if (!parentId || !token) {
+      const pending = { selectedBabySitter, selectedServiceId, booking };
+      localStorage.setItem("pendingReservation", JSON.stringify(pending));
+      navigate("/login?redirect=/reservation");
+      return;
+    }
+  
+    if (!selectedBabySitter || !selectedServiceId) {
+      alert("BabySitter ou service manquant ❌");
+      return;
+    }
+    const dateDebut = new Date(`${booking.date}T${booking.startTime}:00`);
+    const dateFin = new Date(`${booking.date}T${booking.endTime}:00`);
+    
+    const data = {
+      parentId,
+      babySitterId: selectedBabySitter._id,
+      serviceId: selectedServiceId,
+      dateHeureDebut: dateDebut.toISOString(),
+      dateHeureFin: dateFin.toISOString(),
+      statut: "en attente",
+      children: booking.children,
+      specialNeeds: booking.specialNeeds,
+    };
+    
+    console.log("DATA SENT 👉", data);
+  
     try {
-      const data = {
-        babySitterId: selectedBabySitter?._id || null,
-        serviceId: selectedService?._id || null,
-        dateHeureDebut: new Date(`${booking.date}T${booking.startTime}`),
-        dateHeureFin: new Date(`${booking.date}T${booking.endTime}`),
-        statut: booking.statut
-      };
-      
-  
-      console.log("DATA SENT 👉", data);
-  
-      // ✅ axios async/await
-      const res = await axios.post(
+      await axios.post(
         "http://localhost:4000/api/reservations/ajouter",
         data,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`, 
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
   
-      console.log("Réservation ajoutée :", res.data);
-      alert("Réservation ajoutée avec succès ✅");
-      setReservations((prev) => [...prev, res.data.reservation]);
-  
+      alert("Réservation ajoutée ✅");
+      navigate("/search-results");
     } catch (err) {
-      console.error("Erreur ajout réservation:", err.response?.data || err.message);
-      alert("Erreur lors de la réservation ❌");
+      console.error(err.response?.data || err.message);
+      alert("Erreur réservation ❌");
     }
   };
+  const calculateTotal = () => {
+    if (!booking.startTime || !booking.endTime || !prixParHeure) return 0;
   
-      
+    const start = new Date(`2000-01-01T${booking.startTime}`);
+    const end = new Date(`2000-01-01T${booking.endTime}`);
+  
+    const diffMs = end - start;
+    const diffHours = diffMs / (1000 * 60 * 60);
+  
+    if (diffHours <= 0) return 0;
+  
+    return diffHours * prixParHeure;
+  };
   
   
   return (
@@ -105,9 +156,10 @@ const MesReservations = () => {
             ))}
           </div>
         </div>
+
         {/* Wizard Content */}
         <div className="bg-white rounded-xl shadow-sm p-8">
-          {/* Step 1 */}
+          {/* Step 1: Date & Heure */}
           {step === 1 && (
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Choisissez la date et l'heure</h2>
@@ -145,7 +197,7 @@ const MesReservations = () => {
             </div>
           )}
 
-          {/* Step 2 */}
+          {/* Step 2: Détails */}
           {step === 2 && (
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Détails de la garde</h2>
@@ -174,34 +226,20 @@ const MesReservations = () => {
               </div>
             </div>
           )}
-          {/* Step 3 */}
+
+          {/* Step 3: Confirmation */}
           {step === 3 && (
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Récapitulatif</h2>
-              <div className="bg-gray-50 rounded-lg p-6 mb-6">
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Date</span>
-                    <span className="font-semibold">{booking.date || 'Non renseigné'}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Heure</span>
-                    <span className="font-semibold">{booking.startTime} - {booking.endTime}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Enfants</span>
-                    <span className="font-semibold">{booking.children || '—'}</span>
-                  </div>
-                  <div className="flex justify-between pt-3 border-t border-gray-200">
-                    <span className="text-gray-600">Total estimé</span>
-                    <span className="text-2xl font-bold text-pink-600">€45</span>
-                  </div>
-                </div>
+              <div className="bg-gray-50 rounded-lg p-6 mb-6 space-y-3">
+                <div className="flex justify-between"><span>Date</span><span className="font-semibold">{booking.date || '—'}</span></div>
+                <div className="flex justify-between"><span>Heure</span><span className="font-semibold">{booking.startTime} - {booking.endTime}</span></div>
+                <div className="flex justify-between"><span>Enfants</span><span className="font-semibold">{booking.children || '—'}</span></div>
+                <div className="flex justify-between"><span>Service</span><span className="font-semibold">{selectedServiceId || '—'}</span></div>
+                <div className="flex justify-between pt-3 border-t border-gray-200"><span>Total estimé</span><span className="text-2xl font-bold text-pink-600">{calculateTotal()}DT</span></div>
               </div>
               <div className="bg-pink-50 border border-pink-200 rounded-lg p-4 mb-6">
-                <p className="text-sm text-pink-800">
-                  💳 Le paiement sera demandé après confirmation de la baby-sitter.
-                </p>
+                <p className="text-sm text-pink-800">💳 Le paiement sera demandé après confirmation de la baby-sitter.</p>
               </div>
             </div>
           )}
@@ -225,16 +263,16 @@ const MesReservations = () => {
                 Suivant
               </button>
             ) : (
-              <button 
+              <button
                 onClick={ajouterReservation}
-                className="px-6 py-3 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition font-semibold">
+                className="px-6 py-3 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition font-semibold"
+              >
                 Confirmer la réservation
               </button>
             )}
           </div>
         </div>
       </div>
-      
     </div>
   );
 };

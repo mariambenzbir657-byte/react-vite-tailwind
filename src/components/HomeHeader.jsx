@@ -4,13 +4,9 @@ function HomeHeader() {
   const navigate = useNavigate();
 
   const handleReserver = () => {
-    const token = localStorage.getItem("token");
-  
-    if (token) {
-      navigate("/login");
-    }
-  };
-  
+      navigate("/Login"); // Toujours aller au login
+    };
+
   return (
     <nav className="flex items-center justify-between px-10 py-4 bg-white shadow-sm">
       

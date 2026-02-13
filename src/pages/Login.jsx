@@ -164,40 +164,47 @@ const SmartBabyCareLogin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
+  
     try {
-      const res = await axios.post("http://localhost:4000/api/auth/login", { email, mdp });
-
+      const res = await axios.post("http://localhost:4000/api/auth/login", {
+        email,
+        mdp,
+      });
+  
       const { token, user } = res.data;
-
+  
       if (!token || !user) {
-        navigate("/register");
+        alert("Erreur login ❌");
         return;
       }
-
+  
       localStorage.setItem("token", token);
+      localStorage.setItem("id", user.id || user._id);
+      localStorage.setItem("role", user.role);
       localStorage.setItem("user", JSON.stringify(user));
-
-      if (user.role.toLowerCase() === "admin") {
+  
+      console.log("USER SAVED 👉", user); // 🔥 test
+  
+      const role = user.role.toLowerCase();
+  
+      if (role === "admin") {
         navigate("/admin");
-      } else if (user.role.toLowerCase() === "parent") {
-        navigate("/MesReservations");
-      } else if (user.role.toLowerCase() === "babysitter") {
+      } else if (role === "parent") {
+        navigate("/search-results");
+      } else if (role === "babysitter") {
         navigate("/");
       } else {
-        alert("Rôle utilisateur inconnu");
-        localStorage.clear();
+        alert("Rôle inconnu ❌");
       }
+  
     } catch (err) {
-      if (err.response?.status === 404) {
-        navigate("/register");
-      } else {
-        alert("Email ou mot de passe incorrect ❌");
-      }
+      console.error(err.response?.data || err.message);
+      alert("Email ou mot de passe incorrect ❌");
     } finally {
       setLoading(false);
     }
   };
+  
 
   return (
     <SplitLoginCard

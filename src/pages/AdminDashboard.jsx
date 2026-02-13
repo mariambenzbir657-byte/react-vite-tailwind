@@ -24,7 +24,7 @@ const Modal = ({ title, isOpen, onClose, children }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl border border-gray-100 overflow-hidden">
+      <div className="relative w-full max-w-3xl max-h-[85vh] rounded-2xl bg-white shadow-2xl border border-gray-100 overflow-hidden flex flex-col">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <h3 className="text-lg font-bold text-gray-900">{title}</h3>
           <button
@@ -35,7 +35,7 @@ const Modal = ({ title, isOpen, onClose, children }) => {
             <X className="w-5 h-5 text-gray-700" />
           </button>
         </div>
-        <div className="p-6">{children}</div>
+        <div className="p-5 overflow-y-auto flex-1">{children}</div>
       </div>
     </div>
   );
@@ -56,8 +56,8 @@ const InputField = ({ label, value, onChange, type = "text", placeholder }) => (
           onChange(e.target.value);
         }
       }}
-      className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10"
-    />
+      className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
+      />
   </label>
 );
 
@@ -187,8 +187,8 @@ const CrudTable = ({
                 {columns.map((c) => (
                   <td
                     key={c.key}
-                    className="px-6 py-3 text-gray-800 whitespace-nowrap"
-                  >
+                    className="px-4 py-2 text-gray-800 max-w-[180px]"
+                    >
                     {c.key === "mdp" ? (
                       "******"
                     ) : c.key === "image" ? (
@@ -260,7 +260,7 @@ const CrudTable = ({
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {columns
             .filter((c) => c.key !== "id")
             .map((c) => (
@@ -273,6 +273,7 @@ const CrudTable = ({
               />
             ))}
         </div>
+
         {formData.image && typeof formData.image === "object" && (
           <img
             src={URL.createObjectURL(formData.image)}
@@ -421,6 +422,7 @@ export default function SmartBabyCareAdminDashboard() {
             email: s.email,
             role: s.role,
             mdp: s.mdp,
+            adresse: s.adresse,
             qualifications: s.qualifications,
             estVerifie: s.estVerifie,
             disponibilites: s.disponibilites,
@@ -619,6 +621,7 @@ export default function SmartBabyCareAdminDashboard() {
                 { key: "prenom", label: "Prénom" },
                 { key: "email", label: "Email" },
                 { key: "mdp", label: "Mot de passe" },
+                { key: "adresse", label: "Adresse" },
                 { key: "qualifications", label: "Qualifications" },
                 { key: "estVerifie", label: "Vérifié" },
                 { key: "disponibilites", label: "Disponibilités" },

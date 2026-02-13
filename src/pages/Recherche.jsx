@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Filter,Star } from "lucide-react";
+import { Filter,Star,MapPin } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 function Recherche() {
@@ -12,48 +12,94 @@ function Recherche() {
 
   const [babysitters, setBabySitters] = useState([]);
   const [filters, setFilters] = useState({
-    city: "",
-    priceRange: "",
     rating: "",
-    availability: "",
   });
+
+  const generateFixedRating = (id) => {
+    const sum = id.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return Number((4 + (sum % 10) / 10).toFixed(1));
+  };
 
   useEffect(() => {
     async function fetchBabySitters() {
       try {
-        const res = await axios.get("http://localhost:4000/api/users/",{
-          params: { search }, 
+        const res = await axios.get("http://localhost:4000/api/users/", {
+          params: { search },
         });
 
-        const onlySitters = res.data.filter(
-          (u) => u.role === "BabySitter"
+        const onlySitters = res.data.filter((u) => u.role === "BabySitter");
+
+        const sittersWithService = await Promise.all(
+          onlySitters.map(async (s) => {
+            try {
+              const resService = await axios.get(
+                `http://localhost:4000/api/services/babysitter/${s._id}`
+              );
+              if (resService.data.length > 0) {
+                const service = resService.data[0];
+                return {
+                  ...s,
+                  serviceId: service._id,
+                  prixParHeure: service.prixParHeure,
+                  typeService: service.typeService,
+                  descriptionService: service.description,
+                };
+              }
+              return s;
+            } catch {
+              return s;
+            }
+          })
         );
-        setBabySitters(onlySitters);
-      } catch (err) {
+
+        const sittersWithRating = sittersWithService.map((s) => ({
+          ...s,
+          rating: generateFixedRating(s._id),
+          reviews: (s._id.charCodeAt(0) % 40) + 10,
+        }));
+        
+        
+        setBabySitters(sittersWithRating);
+        } catch (err) {
         console.error(err);
       } finally {
         setLoading(false);
       }
     }
+
     fetchBabySitters();
-  },  [search]);
+  }, [search]);
 
   const filteredBabysitters = babysitters.filter((b) => {
-    const cityMatch = filters.city
-      ? b.city?.toLowerCase().includes(filters.city.toLowerCase())
+    const cityMatch = filters.adresse
+      ? b.adresse?.toLowerCase().includes(filters.adresse.toLowerCase())
       : true;
-    const priceMatch = filters.priceRange
-      ? b.prixParHeure <= Number(filters.priceRange)
+    const priceMatch = filters.prixParHeure
+      ? b.prixParHeure <= Number(filters.prixParHeure)
       : true;
     const ratingMatch = filters.rating ? b.rating >= Number(filters.rating) : true;
-    const availabilityMatch = filters.availability
-      ? filters.availability === "now"
-        ? b.disponibilites
-        : true
-      : true;
-
+  
+    const availabilityMatch = (() => {
+      if (!filters.disponibilites) return true;
+  
+      const today = new Date();
+      const dayNames = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
+      const currentDay = dayNames[today.getDay()];
+  
+      if (filters.disponibilites === "now" || filters.disponibilites === "today") {
+        return b.disponibilites?.includes(currentDay);
+      }
+  
+      if (filters.disponibilites === "week") {
+        return b.disponibilites && b.disponibilites.length > 0;
+      }
+  
+      return true;
+    })();
+  
     return cityMatch && priceMatch && ratingMatch && availabilityMatch;
   });
+  
 
   return (
     <div className="min-h-screen bg-gray-50 py-10">
@@ -76,9 +122,9 @@ function Recherche() {
               </label>
               <input
                 type="text"
-                placeholder="Ex: Paris"
-                value={filters.city}
-                onChange={(e) => setFilters({ ...filters, city: e.target.value })}
+                placeholder="Ex: ville"
+                value={filters.adresse}
+                onChange={(e) => setFilters({ ...filters, adresse: e.target.value })}
                 className="w-full rounded-lg border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
               />
             </div>
@@ -88,16 +134,16 @@ function Recherche() {
                 Prix max
               </label>
               <select
-                value={filters.priceRange}
+                value={filters.prixParHeure}
                 onChange={(e) =>
-                  setFilters({ ...filters, priceRange: e.target.value })
+                  setFilters({ ...filters, prixParHeure: e.target.value })
                 }
                 className="w-full rounded-lg border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
               >
                 <option value="">Tous</option>
-                <option value="15">€15/h max</option>
-                <option value="20">€20/h max</option>
-                <option value="25">€25/h max</option>
+                <option value="15">15DT/h max</option>
+                <option value="20">20DT/h max</option>
+                <option value="25">25DT/h max</option>
               </select>
             </div>
 
@@ -122,9 +168,9 @@ function Recherche() {
                 Disponibilité
               </label>
               <select
-                value={filters.availability}
+                value={filters.disponibilites}
                 onChange={(e) =>
-                  setFilters({ ...filters, availability: e.target.value })
+                  setFilters({ ...filters,disponibilites: e.target.value })
                 }
                 className="w-full rounded-lg border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
               >
@@ -173,14 +219,19 @@ function Recherche() {
                       <h3 className="text-xl font-bold text-gray-900">
                         {b.nom} {b.prenom}
                       </h3>
+                      <div className="flex items-center gap-2 text-gray-600 mt-2">
+                        <MapPin className="w-4 h-4" />
+                        <span>{b.adresse}</span>
+                      </div>
                     </div>
             
                     <div className="flex items-center gap-1">
                       <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-                      <span className="font-semibold text-gray-900">
+                      <span className="text-sm font-semibold text-gray-700">
                         {b.rating}
                       </span>
                     </div>
+
                   </div>
             
                   <p className="text-sm text-gray-600 mb-3">
@@ -189,26 +240,24 @@ function Recherche() {
             
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-pink-600 font-bold">
-                      {b.price}
-                    </span>
-                    <span className="text-gray-500 text-sm">
-                      {b.reviews} avis
+                      {b.prixParHeure} DT/h
                     </span>
                   </div>
             
                   <button
                     onClick={() => {
-                      localStorage.setItem(
-                        "selectedSitter",
-                        JSON.stringify(b)
-                      );
-                    navigate("/ProfilBabySitter");
+                      // Navigate with babysitterId and serviceId
+                      navigate(`/ProfilBabySitter/${b._id}`, {
+                        state: {
+                          babysitterId: b._id,
+                          serviceId: b.serviceId,
+                        },
+                      });
                     }}
                     className="w-full bg-pink-500 hover:bg-pink-600 text-white py-2 rounded-lg"
                   >
                     Voir Profil
                   </button>
-
                 </div>
               </div>
             ))

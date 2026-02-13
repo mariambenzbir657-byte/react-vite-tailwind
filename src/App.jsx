@@ -14,7 +14,6 @@ import Chatbot from "./pages/Chatbot";
 import ProfilBabySitter from "./pages/ProfilBabySitter";
 import Messages from "./pages/Messages";
 import TableaubordParent from "./pages/TableaubordParent";
-
 function Layout() {
   const location = useLocation();
   const headerMap = {
@@ -26,7 +25,10 @@ function Layout() {
     
   };
   const HeaderComponent = headerMap[location.pathname];
-  const noFooterRoutes = ["/login","/ProfilBabySitter","/admin","/MesReservations","/search-results","/Register","/messages","/Chatbot","/TableaubordParent"];
+  const noFooterRoutes = ["/Login","/admin","/MesReservations","/search-results","/register","/messages","/Chatbot","/TableaubordParent"];
+  const hideFooter =
+  noFooterRoutes.includes(location.pathname) || 
+  location.pathname.startsWith("/ProfilBabySitter/");
   return (
     <div className="flex flex-col min-h-screen">
       {HeaderComponent && <HeaderComponent />}
@@ -41,10 +43,10 @@ function Layout() {
         <Route path="/search-results" element={<Recherche />} />
         <Route path="/MesReservations" element={<MesReservations />} />
         <Route path="/Messages" element={<Messages />} />
-        <Route path="/ProfilBabySitter" element={<ProfilBabySitter/>} />
+        <Route path="/ProfilBabySitter/:id" element={<ProfilBabySitter />} />
         <Route path="/TableaubordParent" element={<TableaubordParent/>}/>
       </Routes>
-      {!noFooterRoutes.includes(location.pathname) && <Footer />}
+      {!hideFooter && <Footer />}
     </div>
   );
 }

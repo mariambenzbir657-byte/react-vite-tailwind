@@ -82,16 +82,26 @@ const MesReservations = () => {
     };
     
     console.log("DATA SENT 👉", data);
-  
     try {
-      await axios.post(
+      const res = await axios.post(
         "http://localhost:4000/api/reservations/ajouter",
         data,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-  
-      alert("Réservation ajoutée ✅");
-      navigate("/search-results");
+      const reservation = res.data.reservation; 
+      const totalCalcule = calculateTotal();
+      console.log("Reservation ajoutée:", reservation);
+      navigate("/Paiement", {
+        state: {
+          reservation: {
+            _id: reservation._id,
+            total: totalCalcule,
+            statut: reservation.statut
+          }
+        }
+      });
+      
+
     } catch (err) {
       console.error(err.response?.data || err.message);
       alert("Erreur réservation ❌");
@@ -235,7 +245,6 @@ const MesReservations = () => {
                 <div className="flex justify-between"><span>Date</span><span className="font-semibold">{booking.date || '—'}</span></div>
                 <div className="flex justify-between"><span>Heure</span><span className="font-semibold">{booking.startTime} - {booking.endTime}</span></div>
                 <div className="flex justify-between"><span>Enfants</span><span className="font-semibold">{booking.children || '—'}</span></div>
-                <div className="flex justify-between"><span>Service</span><span className="font-semibold">{selectedServiceId || '—'}</span></div>
                 <div className="flex justify-between pt-3 border-t border-gray-200"><span>Total estimé</span><span className="text-2xl font-bold text-pink-600">{calculateTotal()}DT</span></div>
               </div>
               <div className="bg-pink-50 border border-pink-200 rounded-lg p-4 mb-6">

@@ -3,6 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 import {
+  LogOut,
   Users,
   Heart,
   Plus,
@@ -88,6 +89,13 @@ const CrudTable = ({
   const [formData, setFormData] = useState(empty);
 
   // Reset form data when modal opens/closes
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+  
+    if (!token) {
+      navigate("/Login");
+    }
+  }, []);
   useEffect(() => {
     if (editRow) {
       setFormData({ ...editRow, image: null });
@@ -362,6 +370,10 @@ export default function SmartBabyCareAdminDashboard() {
   const [parents, setParents] = useState([]);
   const [sitters, setSitters] = useState([]);
   const [section, setSection] = useState("parents");
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/Login");
+  };
 
   const accent = "pink"; 
   const accentBg =
@@ -582,9 +594,9 @@ export default function SmartBabyCareAdminDashboard() {
             </button>
           </nav>
           <div className="px-4 pb-6">
-            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
-              <Settings className="w-4 h-4" />
-              <span className="font-semibold">Paramètres</span>
+            <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
+            <LogOut className="w-5 h-5" />
+            <span className="font-semibold">Se connecter</span>
             </button>
           </div>
         </aside>

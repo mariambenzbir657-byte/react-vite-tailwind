@@ -60,7 +60,7 @@ const Select = ({ label, name, options, icon, value, onChange, required }) => (
     </div>
   </label>
 );
-const RegisterCard = ({brand,tagline,hint,gradientClass,buttonClass,leftTitle = "CRÉER UN COMPTE",children,onSubmit,  onBrandClick, // ✅
+const RegisterCard = ({brand,tagline,gradientClass,buttonClass,leftTitle = "CRÉER UN COMPTE",children,onSubmit,  onBrandClick,handleReserver, // ✅
 }) => (
   <section className="py-20 bg-gradient-to-b from-slate-50 to-white min-h-screen flex items-center justify-center">
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
@@ -118,16 +118,16 @@ const RegisterCard = ({brand,tagline,hint,gradientClass,buttonClass,leftTitle = 
                   />
                   <span>J’accepte les conditions</span>
                 </label>
+                <div className="flex justify-center mt-3">
                 <button
                   type="button"
+                  onClick={handleReserver}
                   className="text-gray-700 hover:text-gray-900 font-semibold"
                 >
                   Déjà un compte ?
                 </button>
+
               </div>
-              <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4 text-sm text-gray-700 mt-4">
-                <p className="font-semibold text-gray-900 mb-2">Conseil</p>
-                <p className="text-gray-600">{hint}</p>
               </div>
             </form>
           </div>
@@ -164,14 +164,17 @@ const Register = () => {
     } catch (error) {
       if (error.response?.status === 400) {
         // Email déjà utilisé
-        alert("Ce email est déjà utilisé, veuillez vous connecter.");
-        navigate("/login");
+        navigate("/Login");
       } else {
         alert(error.response?.data?.message || "Erreur lors de l'inscription");
       }
     }
   };
-  
+  const handleReserver = (e) => {
+    e.preventDefault(); 
+    console.log("Bouton déjà un compte cliqué"); 
+    navigate("/Login");
+  };
   return (
     <RegisterCard 
     brand="SmartBabyCare"
@@ -181,6 +184,7 @@ const Register = () => {
     hint="Choisissez votre rôle et complétez vos informations pour un matching rapide."
     onSubmit={handleSubmit}
     onBrandClick={() => navigate(-1)}
+    handleReserver={handleReserver} 
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Input label="Nom"name="nom"placeholder="Ex: Mariem"icon={<User className="w-4 h-4" />}value={formData.nom}onChange={handleChange}

@@ -14,6 +14,8 @@ import Chatbot from "./pages/Chatbot";
 import ProfilBabySitter from "./pages/ProfilBabySitter";
 import Messages from "./pages/Messages";
 import TableaubordParent from "./pages/TableaubordParent";
+import Paiement from"./pages/Paiement";
+import ProtectedRoute from "./components/ProtectedRoute";
 function Layout() {
   const location = useLocation();
   const headerMap = {
@@ -25,12 +27,13 @@ function Layout() {
     
   };
   const HeaderComponent = headerMap[location.pathname];
-  const noFooterRoutes = ["/Login","/admin","/MesReservations","/search-results","/register","/messages","/Chatbot","/TableaubordParent"];
+  const noFooterRoutes = ["/Login","/admin","/MesReservations","/search-results","/Register","/messages","/Chatbot","/TableaubordParent","/Paiement"];
   const hideFooter =
   noFooterRoutes.includes(location.pathname) || 
-  location.pathname.startsWith("/ProfilBabySitter/");
+  location.pathname.startsWith("/ProfilBabySitter/") ||
+  location.pathname.startsWith("/Messages/");
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen w-full overflow-x-hidden">
       {HeaderComponent && <HeaderComponent />}
       <Routes>
         <Route path="/" element={<Home />} />
@@ -38,13 +41,21 @@ function Layout() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin"element={
+          <ProtectedRoute role="admin">
+            <AdminDashboard />
+          </ProtectedRoute>
+          }
+        />
         <Route path="/Chatbot" element={<Chatbot />} />
         <Route path="/search-results" element={<Recherche />} />
         <Route path="/MesReservations" element={<MesReservations />} />
         <Route path="/Messages" element={<Messages />} />
         <Route path="/ProfilBabySitter/:id" element={<ProfilBabySitter />} />
         <Route path="/TableaubordParent" element={<TableaubordParent/>}/>
+        <Route path="/Paiement"element={<Paiement/>}/>
+        <Route path="/Messages/:id" element={<Messages />} />
+
       </Routes>
       {!hideFooter && <Footer />}
     </div>

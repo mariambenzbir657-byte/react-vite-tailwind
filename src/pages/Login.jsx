@@ -96,36 +96,7 @@ const SplitLoginCard = ({
                 className={`w-full py-3.5 rounded-2xl font-semibold text-white shadow-lg transition ${buttonClass} ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 {loading ? "Connexion..." : "Se connecter"}
-              </button>
-
-              <div className="flex items-center justify-between text-sm text-gray-600">
-                <label className="inline-flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    className="rounded border-gray-300 text-gray-900 focus:ring-gray-500 focus:ring-offset-0"
-                  />
-                  <span>Remember me</span>
-                </label>
-                <button type="button" className="inline-flex items-center space-x-1 text-gray-700 hover:text-gray-900 font-semibold">
-                  <Eye className="w-4 h-4" />
-                  <span>Forgot?</span>
-                </button>
-              </div>
-
-              <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4 text-sm text-gray-700">
-                <p className="font-semibold text-gray-900 mb-2">Accès démo</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <p className="text-xs text-gray-500">Email</p>
-                    <p className="font-mono">admin@demo.com</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Mot de passe</p>
-                    <p className="font-mono">Password123!</p>
-                  </div>
-                </div>
-                <p className="text-gray-600 mt-2">{hint}</p>
-              </div>
+              </button> 
             </form>
           </div>
         </div>
@@ -182,6 +153,7 @@ const SmartBabyCareLogin = () => {
       localStorage.setItem("id", user.id || user._id);
       localStorage.setItem("role", user.role);
       localStorage.setItem("user", JSON.stringify(user));
+      JSON.parse(localStorage.getItem("user"));
   
       console.log("USER SAVED 👉", user); // 🔥 test
   

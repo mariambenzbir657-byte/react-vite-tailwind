@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 export default function SearchHeader() {
   const navigate = useNavigate();
   return (
-    <header className="bg-white shadow-md px-8 py-4 flex justify-between items-center">   
+    <header className="w-full bg-white shadow-md px-4 md:px-8 py-4 flex justify-between items-center flex-wrap overflow-x-hidden">
       {/* Logo */}
       <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-lg transition">
         <h1 className="text-2xl font-bold text-pink-600">
@@ -13,7 +13,7 @@ export default function SearchHeader() {
       </button>
 
       {/* Menu */}
-      <nav className="flex gap-6 text-gray-700 font-medium">
+      <nav className="flex gap-6 text-gray-700 font-medium flex-wrap">
         <Link to="/search-results" className="hover:text-pink-600">
           Recherche
         </Link>

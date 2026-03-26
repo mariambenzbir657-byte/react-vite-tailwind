@@ -187,9 +187,9 @@ const Register = () => {
     handleReserver={handleReserver} 
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Input label="Nom"name="nom"placeholder="Ex: Mariem"icon={<User className="w-4 h-4" />}value={formData.nom}onChange={handleChange}
+        <Input label="Nom"name="nom"placeholder=" nom"icon={<User className="w-4 h-4" />}value={formData.nom}onChange={handleChange}
           required/>
-        <Input label="Prénom"name="prenom"placeholder="Ex: ben zbir"icon={<User className="w-4 h-4" />}value={formData.prenom}onChange={handleChange}
+        <Input label="Prénom"name="prenom"placeholder="prenom"icon={<User className="w-4 h-4" />}value={formData.prenom}onChange={handleChange}
           required/>
       </div>
       <Input label="Email"name="email"type="email"placeholder="parent/babysitter@exemple.com"icon={<Mail className="w-4 h-4" />}value={formData.email}onChange={handleChange}
@@ -221,6 +221,14 @@ const Register = () => {
             name="qualifications"
             placeholder="Ex: Première aide, BAFA..."
             value={formData.qualifications}
+            onChange={handleChange}
+            required
+          />
+          <Input
+            label="adresse"
+            name="adresse"
+            placeholder="votre adresse..."
+            value={formData.adresse}
             onChange={handleChange}
             required
           />

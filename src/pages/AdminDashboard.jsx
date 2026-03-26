@@ -48,7 +48,7 @@ const InputField = ({ label, value, onChange, type = "text", placeholder }) => (
     <span className="text-sm font-semibold text-gray-800">{label}</span>
     <input
       type={type}
-      value={type !== "file" ? value : undefined}
+      value={type !== "file" ? value ?? "" : undefined} // fallback
       placeholder={placeholder}
       onChange={(e) => {
         if (type === "file") {
@@ -58,7 +58,7 @@ const InputField = ({ label, value, onChange, type = "text", placeholder }) => (
         }
       }}
       className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
-      />
+    />
   </label>
 );
 
@@ -371,7 +371,10 @@ export default function SmartBabyCareAdminDashboard() {
   const [sitters, setSitters] = useState([]);
   const [section, setSection] = useState("parents");
   const handleLogout = () => {
-    localStorage.clear();
+    localStorage.removeItem("id");
+    localStorage.removeItem("token");
+    localStorage.removeItem("user"); 
+    localStorage.removeItem("role");
     navigate("/Login");
   };
 
@@ -557,7 +560,6 @@ export default function SmartBabyCareAdminDashboard() {
               </div>
               <div>
               <p
-                onClick={() => navigate("/TableaubordParent")}
                 className="text-sm uppercase tracking-wider text-pink-200 font-bold cursor-pointer hover:text-pink-300 transition"
               >
                 Admin
@@ -595,7 +597,6 @@ export default function SmartBabyCareAdminDashboard() {
           </nav>
           <div className="px-4 pb-6">
             <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
-            <LogOut className="w-5 h-5" />
             <span className="font-semibold">Se connecter</span>
             </button>
           </div>

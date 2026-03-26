@@ -11,8 +11,14 @@ const MesReservations = () => {
   // BabySitter sélectionnée et service et prix
   const [selectedBabySitter, setSelectedBabySitter] = useState(null);
   const [selectedServiceId, setSelectedServiceId] = useState(null);
+  const [modePaiement, setModePaiement] = useState("Carte"); // valeur par défaut
   const [prixParHeure, setPrixParHeure] = useState(0);
-
+  const [enfant, setEnfant] = useState({
+    nom: '',
+    dateNaissance: '',
+    allergies: '',
+    besoinsSpeciaux: ''
+  });
 
   // Infos de réservation
   const [booking, setBooking] = useState({
@@ -49,62 +55,74 @@ const MesReservations = () => {
   }, []);
 
   // Ajouter réservation
+
   const ajouterReservation = async () => {
     const token = localStorage.getItem("token");
     const user = JSON.parse(localStorage.getItem("user"));
     const parentId = user?.id || user?._id;
-  
-    console.log("parentId 👉", parentId);
-  
+
     if (!parentId || !token) {
-      const pending = { selectedBabySitter, selectedServiceId, booking };
-      localStorage.setItem("pendingReservation", JSON.stringify(pending));
+      localStorage.setItem(
+        "pendingReservation",
+        JSON.stringify({ selectedBabySitter, selectedServiceId, booking })
+      );
       navigate("/login?redirect=/reservation");
       return;
     }
-  
+
     if (!selectedBabySitter || !selectedServiceId) {
-      alert("BabySitter ou service manquant ❌");
+      alert("❌ BabySitter ou service manquant");
       return;
     }
-    const dateDebut = new Date(`${booking.date}T${booking.startTime}:00`);
-    const dateFin = new Date(`${booking.date}T${booking.endTime}:00`);
-    
-    const data = {
-      parentId,
-      babySitterId: selectedBabySitter._id,
-      serviceId: selectedServiceId,
-      dateHeureDebut: dateDebut.toISOString(),
-      dateHeureFin: dateFin.toISOString(),
-      statut: "en attente",
-      children: booking.children,
-      specialNeeds: booking.specialNeeds,
-    };
-    
-    console.log("DATA SENT 👉", data);
+
     try {
+      const dateDebut = new Date(`${booking.date}T${booking.startTime}:00`);
+      const dateFin = new Date(`${booking.date}T${booking.endTime}:00`);
+
       const res = await axios.post(
         "http://localhost:4000/api/reservations/ajouter",
-        data,
+        {
+          parentId,
+          babySitterId: selectedBabySitter._id,
+          serviceId: selectedServiceId,
+          dateHeureDebut: dateDebut.toISOString(),
+          dateHeureFin: dateFin.toISOString(),
+          statut: "en attente",
+          enfant,
+          specialNeeds: booking.specialNeeds,
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      const reservation = res.data.reservation; 
-      const totalCalcule = calculateTotal();
-      console.log("Reservation ajoutée:", reservation);
+
+      const reservation = res.data.reservation;
+      const total = calculateTotal();
+
+      const paiementRes = await axios.post(
+        "http://localhost:4000/api/paiement/ajouter",
+        {
+          reservationId: reservation._id,
+          montant: total,
+          modePaiement: modePaiement,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const paiement = paiementRes.data;
+
+      // 👉 Go to paiement page
       navigate("/Paiement", {
         state: {
           reservation: {
             _id: reservation._id,
-            total: totalCalcule,
-            statut: reservation.statut
-          }
-        }
+            total: total,
+            statut: paiement.statut, // غالبا "non payé"
+          },
+        },
       });
-      
 
     } catch (err) {
       console.error(err.response?.data || err.message);
-      alert("Erreur réservation ❌");
+      alert("❌ Erreur réservation");
     }
   };
   const calculateTotal = () => {
@@ -120,7 +138,7 @@ const MesReservations = () => {
   
     return diffHours * prixParHeure;
   };
-  
+
   
   return (
     <div className="min-h-screen bg-gray-50">
@@ -209,33 +227,57 @@ const MesReservations = () => {
 
           {/* Step 2: Détails */}
           {step === 2 && (
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Détails de la garde</h2>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Nombre d'enfants</label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={booking.children}
-                    onChange={(e) => setBooking({ ...booking, children: e.target.value })}
-                    placeholder="Ex: 2"
-                    className="w-full rounded-lg border border-gray-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Besoins spéciaux (optionnel)</label>
-                  <textarea
-                    value={booking.specialNeeds}
-                    onChange={(e) => setBooking({ ...booking, specialNeeds: e.target.value })}
-                    placeholder="Allergies, médicaments, instructions particulières..."
-                    rows="4"
-                    className="w-full rounded-lg border border-gray-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
+  <div>
+    <h2 className="text-2xl font-bold text-gray-900 mb-6">Détails de la garde</h2>
+    <div className="space-y-4">
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">Nom de l'enfant</label>
+        <input
+          type="text"
+          value={enfant.nom}
+          onChange={(e) => setEnfant({ ...enfant, nom: e.target.value })}
+          className="w-full rounded-lg border border-gray-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-500"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">Date de naissance</label>
+        <input
+          type="date"
+          value={enfant.dateNaissance}
+          onChange={(e) =>
+            setEnfant({ ...enfant, dateNaissance: e.target.value })
+          }
+          className="w-full rounded-lg border border-gray-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-500"
+
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">Allergies</label>
+        <input
+          type="text"
+          value={enfant.allergies}
+          onChange={(e) =>
+            setEnfant({ ...enfant, allergies: e.target.value })
+          }
+          className="w-full rounded-lg border border-gray-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-500"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">Besoins spéciaux</label>
+        <textarea
+          value={enfant.besoinsSpeciaux}
+          onChange={(e) =>
+            setEnfant({ ...enfant, besoinsSpeciaux: e.target.value })
+          }
+          className="w-full rounded-lg border border-gray-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-500"
+        />
+      </div>
+    </div>
+  </div>
+)}
 
           {/* Step 3: Confirmation */}
           {step === 3 && (
@@ -244,7 +286,7 @@ const MesReservations = () => {
               <div className="bg-gray-50 rounded-lg p-6 mb-6 space-y-3">
                 <div className="flex justify-between"><span>Date</span><span className="font-semibold">{booking.date || '—'}</span></div>
                 <div className="flex justify-between"><span>Heure</span><span className="font-semibold">{booking.startTime} - {booking.endTime}</span></div>
-                <div className="flex justify-between"><span>Enfants</span><span className="font-semibold">{booking.children || '—'}</span></div>
+                <div className="flex justify-between"><span>Enfants</span><span className="font-semibold">{enfant.nom || '—'}</span></div>
                 <div className="flex justify-between pt-3 border-t border-gray-200"><span>Total estimé</span><span className="text-2xl font-bold text-pink-600">{calculateTotal()}DT</span></div>
               </div>
               <div className="bg-pink-50 border border-pink-200 rounded-lg p-4 mb-6">

@@ -16,6 +16,8 @@ import Messages from "./pages/Messages";
 import TableaubordParent from "./pages/TableaubordParent";
 import Paiement from"./pages/Paiement";
 import ProtectedRoute from "./components/ProtectedRoute";
+import BabysitterDashboard from "./pages/BabysitterDashboard";
+
 function Layout() {
   const location = useLocation();
   const headerMap = {
@@ -27,7 +29,8 @@ function Layout() {
     
   };
   const HeaderComponent = headerMap[location.pathname];
-  const noFooterRoutes = ["/Login","/admin","/MesReservations","/search-results","/Register","/messages","/Chatbot","/TableaubordParent","/Paiement"];
+  const noFooterRoutes = ["/Login","/admin","/MesReservations","/search-results","/Register","/messages","/Chatbot","/TableaubordParent",
+  "/Paiement","/babysitter/dashboard","/Messages/:id"];
   const hideFooter =
   noFooterRoutes.includes(location.pathname) || 
   location.pathname.startsWith("/ProfilBabySitter/") ||
@@ -55,6 +58,8 @@ function Layout() {
         <Route path="/TableaubordParent" element={<TableaubordParent/>}/>
         <Route path="/Paiement"element={<Paiement/>}/>
         <Route path="/Messages/:id" element={<Messages />} />
+        <Route path="/babysitter/dashboard" element={<BabysitterDashboard />} />
+
 
       </Routes>
       {!hideFooter && <Footer />}

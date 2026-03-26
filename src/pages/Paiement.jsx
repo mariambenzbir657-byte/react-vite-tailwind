@@ -23,30 +23,52 @@ export default function PaiementPage() {
 
   const handlePaiement = async () => {
     if (!montant || Number(montant) <= 0) {
-      alert("❌ Veuillez entrer un montant valide.");
+      alert("❌ Montant invalide");
       return;
     }
-
+  
     try {
       setLoading(true);
-
+  
+      let paiement;
+  
+      // ✅ 1. نحاول نجيب paiement
+      try {
+        const res = await axios.get(
+          `http://localhost:4000/api/paiement/by-reservation/${reservation._id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        paiement = res.data;
+      } catch (err) {
+        // ✅ 2. إذا ما فماش → نخلق واحد
+        if (err.response?.status === 404) {
+          const newPaiement = await axios.post(
+            "http://localhost:4000/api/paiement/ajouter",
+            {
+              reservationId: reservation._id,
+              montant: montant,
+              modePaiement: modePaiement,
+            },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+  
+          paiement = newPaiement.data;
+        } else {
+          throw err;
+        }
+      }
+  
       await axios.post(
-        "http://localhost:4000/api/paiement/ajouter",
-        {
-          reservationId: reservation._id,
-          montant: montant, 
-          modePaiement: modePaiement,
-        },
+        `http://localhost:4000/api/paiement/payer/${paiement._id}`,
+        {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
+  
       navigate("/search-results");
-
+  
     } catch (err) {
       console.error(err.response?.data || err.message);
-      alert(
-        "❌ Erreur : " +
-        (err.response?.data?.message || err.message)
-      );
+      alert("❌ Erreur paiement");
     } finally {
       setLoading(false);
     }

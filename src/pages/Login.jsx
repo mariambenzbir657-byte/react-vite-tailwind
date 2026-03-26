@@ -131,6 +131,13 @@ const SmartBabyCareLogin = () => {
   const [mdp, setMdp] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const logout = () => { 
+    localStorage.removeItem("token"); 
+    localStorage.removeItem("user"); 
+    localStorage.removeItem("id"); 
+    localStorage.removeItem("role");
+    navigate(-1);                     
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -154,17 +161,15 @@ const SmartBabyCareLogin = () => {
       localStorage.setItem("role", user.role);
       localStorage.setItem("user", JSON.stringify(user));
       JSON.parse(localStorage.getItem("user"));
-  
-      console.log("USER SAVED 👉", user); // 🔥 test
-  
+    
       const role = user.role.toLowerCase();
   
       if (role === "admin") {
         navigate("/admin");
       } else if (role === "parent") {
-        navigate("/search-results");
+        navigate("/TableaubordParent");
       } else if (role === "babysitter") {
-        navigate("/");
+        navigate("/babysitter/dashboard");
       } else {
         alert("Rôle inconnu ❌");
       }
@@ -188,7 +193,7 @@ const SmartBabyCareLogin = () => {
       onSubmit={handleSubmit}
       loading={loading}
       leftTitle="WELCOME BACK"
-      onBrandClick={() => navigate(-1)}
+      onBrandClick={logout}
     >
       <Input
         label="Email"

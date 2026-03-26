@@ -6,6 +6,7 @@ import axios from "axios";
 function Home() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedBabySitter, setSelectedBabySitter] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -22,7 +23,8 @@ function Home() {
           const res = await axios.get("http://localhost:4000/api/users/", {
             params: { search: searchTerm },
           });
-          setSuggestions(res.data);
+      
+          setSuggestions(Array.isArray(res.data) ? res.data : []);
         } catch (error) {
           console.error(error);
           setSuggestions([]);
@@ -36,9 +38,10 @@ function Home() {
     return () => clearTimeout(delayDebounceFn);
   }, [searchTerm]);
 
-  const handleSelectSuggestion = (nom) => {
-    setSearchTerm(nom);
-    setSuggestions([]);
+  const handleSelectSuggestion = (bs) => {
+    setSearchTerm(bs.nom); // affichage du nom dans le champ
+    setSelectedBabySitter(bs); // stocke le baby-sitter complet
+    setSuggestions([]); // masque la liste
   };
 
   const handleSearch = () => {
@@ -95,9 +98,9 @@ function Home() {
                       <li
                         key={bs._id}
                         className="cursor-pointer px-4 py-2 hover:bg-pink-100"
-                        onClick={() => handleSelectSuggestion(bs.nom)}
+                        onClick={() => handleSelectSuggestion(bs)} // ← passe l’objet complet
                       >
-                        {bs.nom}
+                        {bs.nom} {/* ← affichage du nom du baby-sitter */}
                       </li>
                     ))}
                   </ul>

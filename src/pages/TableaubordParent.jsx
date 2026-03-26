@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { Calendar, CheckCircle, Heart, Clock, Star } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
@@ -6,59 +6,100 @@ import { Link, useNavigate } from "react-router-dom";
 export default function TableaubordParent() {
   const navigate = useNavigate();
   const [reservations, setReservations] = useState([]);
+  const [paiements, setPaiements] = useState({});
   const [loading, setLoading] = useState(true);
+  const fetchedRef = useRef(false); 
 
-  useEffect(() => {
-    const fetchReservations = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const user = JSON.parse(localStorage.getItem("user"));
-        const parentId = user?.id || user?._id;
+  // 🔹 Fonction logout
+  const logout = () => { 
+    localStorage.removeItem("token"); 
+    localStorage.removeItem("user"); 
+    localStorage.removeItem("id"); 
+    localStorage.removeItem("role");
+    navigate(-1);                     
+};
 
-        if (!parentId) return;
+useEffect(() => {
+  const fetchReservations = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const user = JSON.parse(localStorage.getItem("user"));
+      const parentId = user?.id || user?._id;
+      if (!parentId) return;
 
-        const res = await axios.get(
-          `http://localhost:4000/api/reservations/parent/${parentId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+      const res = await axios.get(
+        `http://localhost:4000/api/reservations/parent/${parentId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setReservations(res.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        setReservations(res.data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  fetchReservations();
+}, []);
 
-    fetchReservations();
-  }, []);
+// 🔹 Fetch paiements
+useEffect(() => {
+  const fetchPaiements = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const paiementsData = {};
 
-  const now = new Date();
+      await Promise.all(
+        reservations.map(async (r) => {
+          try {
+            const paiementRes = await axios.get(
+              `http://localhost:4000/api/paiement/by-reservation/${r._id}`,
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+      
+            paiementsData[r._id] = {
+              statut: paiementRes.data.statut,
+              montant: paiementRes.data.montant, // ajouter le montant
+            };
+          } catch {
+            paiementsData[r._id] = {
+              statut: "non payé",
+              montant: 0, // mettre un fallback si erreur
+            };
+          }
+        })
+      );
+      setPaiements(paiementsData);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  if (reservations.length > 0 && !fetchedRef.current) {
+    fetchedRef.current = true;
+    fetchPaiements();
+  }
+}, [reservations]);
 
-  const prochaines = reservations.filter(
-    (r) => new Date(r.dateHeureDebut) > now
-  );
+const now = new Date();
+const prochaines = reservations.filter((r) => new Date(r.dateHeureDebut) > now);
+const passees = reservations.filter((r) => new Date(r.dateHeureDebut) <= now);
+const favoris = reservations.slice(0, 3);
 
-  const passees = reservations.filter(
-    (r) => new Date(r.dateHeureDebut) <= now
-  );
 
-  // Optional: Baby-sitters favoris (exemple static)
-  const favoris = reservations
-    .map((r) => r.babySitterId)
-    .filter(Boolean)
-    .slice(0, 3); 
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* HEADER */}
       <header className="w-full bg-white shadow-md px-4 md:px-8 py-4 flex justify-between items-center flex-wrap overflow-x-hidden">
         <button
-          onClick={() => navigate(-1)}
-          className="p-2 hover:bg-gray-100 rounded-lg transition"
-        >
-          <h1 className="text-2xl font-bold text-pink-600">SmartBabyCare</h1>
-        </button>
+      onClick={logout}
+      className="p-2 hover:bg-gray-100 rounded-lg transition"
+    >
+      <h1 className="text-2xl font-bold text-pink-600 cursor-pointer">
+        SmartBabyCare
+      </h1>
+    </button>
+
         <nav className="flex gap-6 text-gray-700 font-medium flex-wrap">
           <Link to="/TableaubordParent" className="hover:text-pink-600">
             Tableau de bord
@@ -144,11 +185,24 @@ export default function TableaubordParent() {
               <div className="flex justify-between items-center">
                 {/* LEFT INFO */}
                 <div className="space-y-2">
+                <div className="flex items-center gap-3">
+
                   <h4 className="text-lg font-bold text-gray-800">
                     {r.babySitterId?.nom || "Baby-sitter"}_
                     {r.babySitterId?.prenom || "Baby-sitter"}
                   </h4>
-
+                  <span
+                    className={`inline-block px-3 py-1 text-xs rounded-full font-semibold ${
+                      paiements[r._id]?.statut === "payé"
+                        ? "bg-green-100 text-green-600"
+                        : "bg-yellow-100 text-yellow-600"
+                    }`}
+                  >
+                    {paiements[r._id]?.statut === "payé"
+                      ? "Payé ✅"
+                      : "Non payé ⏳"}
+                  </span>
+                </div>  
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <Calendar className="w-4 h-4 text-pink-500" />
                     {new Date(r.dateHeureDebut).toLocaleDateString()}
@@ -161,24 +215,10 @@ export default function TableaubordParent() {
                       minute: "2-digit",
                     })}
                   </div>
-
-                  <span
-                    className={`inline-block px-3 py-1 text-xs rounded-full font-semibold ${
-                      r.paiement === "payé"
-                        ? "bg-green-100 text-green-600"
-                        : "bg-yellow-100 text-yellow-600"
-                    }`}
-                  >
-                    {r.paiement === "payé" ? "Payé ✅" : "Non payé ⏳"}
-                  </span>
                 </div>
 
                 {/* RIGHT BUTTONS */}
                 <div className="flex flex-col gap-2">
-                  <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 text-sm font-semibold">
-                    Détails
-                  </button>
-
                   <button
                     onClick={() =>
                       navigate(`/messages/${r.babySitterId?._id}`)
@@ -212,10 +252,16 @@ export default function TableaubordParent() {
               <div className="flex justify-between items-center">
                 {/* LEFT INFO */}
                 <div className="space-y-2">
+                <div className="flex items-center gap-3">
+
                   <h4 className="text-lg font-bold text-gray-800">
                     {r.babySitterId?.nom || "Baby-sitter"}_
                     {r.babySitterId?.prenom || "Baby-sitter"}
                   </h4>
+                  <span className="px-3 py-1 text-xs rounded-full font-semibold bg-gray-100 text-gray-700">
+                    Terminée 
+                  </span>
+                </div>
 
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <Calendar className="w-4 h-4 text-pink-500" />
@@ -229,33 +275,25 @@ export default function TableaubordParent() {
                       minute: "2-digit",
                     })}
                   </div>
-
-                  <span
-                    className={`inline-block px-3 py-1 text-xs rounded-full font-semibold ${
-                      r.paiement === "payé"
-                        ? "bg-green-100 text-green-600"
-                        : "bg-yellow-100 text-yellow-600"
-                    }`}
-                  >
-                    {r.paiement === "payé" ? "Payé ✅" : "Non payé ⏳"}
-                  </span>
                 </div>
+                {/* RIGHT SIDE */}
+                <div className="flex flex-col items-end gap-2">
+                  
+                  {/* 💰 PRIX */}
+                  <span className="text-lg font-bold text-gray-800">
+                    {paiements[r._id]?.montant
+                      ? `${paiements[r._id].montant} TND`
+                      : "--"}
+                  </span>
+
 
                 {/* RIGHT BUTTONS */}
                 <div className="flex flex-col gap-2">
                   <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 text-sm font-semibold">
                     Voir détails
                   </button>
-
-                  <button
-                    onClick={() =>
-                      navigate(`/messages/${r.babySitterId?._id}`)
-                    }
-                    className="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 text-sm font-semibold"
-                  >
-                    Contacter
-                  </button>
                 </div>
+              </div>
               </div>
             </div>
           ))}

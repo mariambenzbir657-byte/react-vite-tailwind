@@ -32,7 +32,6 @@ export default function PaiementPage() {
   
       let paiement;
   
-      // ✅ 1. نحاول نجيب paiement
       try {
         const res = await axios.get(
           `http://localhost:4000/api/paiement/by-reservation/${reservation._id}`,
@@ -40,7 +39,6 @@ export default function PaiementPage() {
         );
         paiement = res.data;
       } catch (err) {
-        // ✅ 2. إذا ما فماش → نخلق واحد
         if (err.response?.status === 404) {
           const newPaiement = await axios.post(
             "http://localhost:4000/api/paiement/ajouter",
@@ -68,7 +66,6 @@ export default function PaiementPage() {
   
     } catch (err) {
       console.error(err.response?.data || err.message);
-      alert("❌ Erreur paiement");
     } finally {
       setLoading(false);
     }

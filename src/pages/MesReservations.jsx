@@ -115,7 +115,7 @@ const MesReservations = () => {
           reservation: {
             _id: reservation._id,
             total: total,
-            statut: paiement.statut, // غالبا "non payé"
+            statut: paiement.statut, 
           },
         },
       });

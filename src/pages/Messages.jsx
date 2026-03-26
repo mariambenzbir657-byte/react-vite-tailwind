@@ -138,7 +138,6 @@ export default function MessagesPage() {
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
                 {messages.map(msg => {
-                  // تطبيع الدور باش المقارنة صحيحة
                   const normalizedRole = role.toLowerCase() === "babysitter" ? "Babysitter" : "Parent";
                   const isMine = msg.senderRole === normalizedRole;
 
